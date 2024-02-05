@@ -2,77 +2,113 @@
 
 using namespace std;
 
-const int mod1 = 1e9 + 7, mod2 = 1e9 + 9;
-
-int pwr(int a, long long x, int mod) {
-  if (x == 0) return 1;
-  int sq = pwr(a, x / 2, mod);
-  sq = 1ll * sq * sq % mod;
-  if (x & 1) sq = 1ll * sq * a % mod;
-  return sq;
-}
+const int mods[] = {(int)1e9 + 7, (int)1e9 + 9}, K = 2;
 
 struct mhash {
-  long long l, r;
+  array<int, K> val;
 
-  long long norm(long long& x, const int mod) {
-    x %= mod;
-    if (x < 0) {
-      x += mod;
+  mhash(int x = 0) {
+    for (int i = 0; i < K; ++i) {
+      val[i] = x;
+      if (x < 0) val[i] += mods[i];
     }
-    return x;
   }
-
-  mhash(long long _l, long long _r) : l(norm(_l, mod1)), r(norm(_r, mod2)) {}
-  mhash(long long x = 0) : l(norm(x, mod1)), r(norm(x, mod2)) {}
-
-  mhash operator = (const mhash& a) {
-    l = a.l, r = a.r;
-    return (*this);
+  mhash(array<int, K> x) {
+    val = x;
   }
-  mhash operator + (const mhash& a) const {
-    return mhash(l + a.l, r + a.r);
-  }
-  mhash operator += (const mhash& a) {
-    l += a.l;
-    r += a.r;
-    norm(l, mod1), norm(r, mod2);
-    return (*this);
-  }
-  mhash operator * (const mhash& a) const {
-    return mhash(l * a.l, r * a.r);
-  }
-  mhash operator *= (const mhash& a) {
-    l *= a.l;
-    r *= a.r;
-    norm(l, mod1), norm(r, mod2);
-    return (*this);
-  }
-  mhash operator - (const mhash& a) const {
-    return mhash(l - a.l, r - a.r);
-  }
-  mhash operator -= (const mhash& a) {
-    l -= a.l;
-    r -= a.r;
-    norm(l, mod1), norm(r, mod2);
-    return (*this);
-  }
-  mhash operator / (const mhash& a) const {
-    return mhash(l * pwr(a.l, mod1 - 2, mod1), r * pwr(a.r, mod2 - 2, mod2));
-  }
-  mhash operator /= (const mhash& a) {
-    l *= pwr(a.l, mod1 - 2, mod1);
-    r *= pwr(a.r, mod2 - 2, mod2);
-    norm(l, mod1), norm(r, mod2);
-    return (*this);
-  }
-  const bool operator < (const mhash& a) const {
-    return l < a.l or (l == a.l and r < a.r);
-  }
-  const bool operator == (const mhash& a) const {
-    return l == a.l and r == a.r;
+  mhash(long long x) {
+    for (int i = 0; i < K; ++i) {
+      val[i] = x % mods[i];
+    }
   }
 };
+
+bool operator==(mhash a, mhash b) {
+  return a.val == b.val;
+}
+
+bool operator<(mhash a, mhash b) {
+  return a.val < b.val;
+}
+
+mhash operator+(mhash a, mhash b) {
+  for (int i = 0; i < K; ++i) {
+    a.val[i] += b.val[i];
+    if (a.val[i] >= mods[i]) a.val[i] -= mods[i];
+  }
+  return a;
+}
+
+mhash operator+=(mhash& a, mhash b) {
+  for (int i = 0; i < K; ++i) {
+    a.val[i] += b.val[i];
+    if (a.val[i] >= mods[i]) a.val[i] -= mods[i];
+  }
+  return a;
+}
+
+mhash operator-(mhash a, mhash b) {
+  for (int i = 0; i < K; ++i) {
+    a.val[i] -= b.val[i];
+    if (a.val[i] < 0) a.val[i] += mods[i];
+  }
+  return a;
+}
+
+mhash operator-=(mhash& a, mhash b) {
+  for (int i = 0; i < K; ++i) {
+    a.val[i] -= b.val[i];
+    if (a.val[i] < 0) a.val[i] += mods[i];
+  }
+  return a;
+}
+
+mhash operator*(mhash a, mhash b) {
+  for (int i = 0; i < K; ++i) {
+    a.val[i] = 1ll * a.val[i] * b.val[i] % mods[i];
+  }
+  return a;
+}
+
+mhash operator*=(mhash& a, mhash b) {
+  for (int i = 0; i < K; ++i) {
+    a.val[i] = 1ll * a.val[i] * b.val[i] % mods[i];
+  }
+  return a;
+}
+
+template<typename T>
+mhash operator^(mhash a, T k) {
+  mhash b = 1;
+  for (int i = sizeof(k) * 4 - 1; i >= 0; --i) {
+    b *= b;
+    if (k >> i & 1) b *= a; 
+  }
+  return b;
+}
+
+template<typename T>
+mhash operator^=(mhash& a, T k) {
+  mhash b = 1;
+  for (int i = sizeof(k) * 4 - 1; i >= 0; --i) {
+    b *= b;
+    if (k >> i & 1) b *= a; 
+  }
+  return b;
+}
+
+mhash inv(mhash a) {
+  for (int j = 0; j < K; ++j) {
+    int b = 1;
+    int k = mods[j] - 2;
+    for (int i = 31; i >= 0; --i) {
+      b = 1ll * b * b % mods[j];
+      if (k >> i & 1) b = 1ll * b * a.val[j] % mods[j];
+    }
+    a.val[j] = b;
+  }
+  return a;
+}
 
 int main() {
   ios::sync_with_stdio(0);
