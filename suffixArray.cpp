@@ -59,7 +59,7 @@ vector<int> lcp_construction(string_view s, const vector<int>& sa) {
   }
   vector<int> lcp(n - 1);
   for (int i = 0, k = 0; i < n; ++i) {
-    if (sa[i] == n - 1) {
+    if (rank[i] == n - 1) {
       k = 0;
       continue;
     }
