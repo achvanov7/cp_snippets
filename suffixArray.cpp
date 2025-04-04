@@ -51,6 +51,30 @@ vector<int> suffix_array(string& s) {
   return sa;
 }
 
+vector<int> lcp_construction(string_view s, const vector<int>& sa) {
+  int n = size(s);
+  vector<int> rank(n);
+  for (int i = 0; i < n; ++i) {
+    rank[sa[i]] = i;
+  }
+  vector<int> lcp(n - 1);
+  for (int i = 0, k = 0; i < n; ++i) {
+    if (sa[i] == n - 1) {
+      k = 0;
+      continue;
+    }
+    int j = sa[rank[i] + 1];
+    while (i + k < n and j + k < n and s[i + k] == s[j + k]) {
+      k++;
+    }
+    lcp[rank[i]] = k;
+    if (k) {
+      k--;
+    }
+  }
+  return lcp;
+}
+
 int main() {
   ios::sync_with_stdio(0);
   cin.tie(0), cout.tie(0);
